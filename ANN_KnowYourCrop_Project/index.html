@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KnowYourCrop - Intelligent Crop Recommendation</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Oswald:wght@300;400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Oswald', sans-serif;
+            background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+            min-height: 100vh;
+            color: #2d3436;
+            line-height: 1.6;
+            font-weight: 400;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Playfair Display', serif;
+            font-weight: 600;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .nav-brand h1 {
+            color: #2d3436;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            color: #2d3436;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 5px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+        }
+
+        .nav-links a:hover,
+        .nav-links a.active {
+            background: #00b894;
+            color: white;
+        }
+
+        .main-content {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .page {
+            display: none;
+        }
+
+        .page.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dashboard Styles */
+        .dashboard-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            color: white;
+        }
+
+        .dashboard-header h1 {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            font-weight: 700;
+        }
+
+        .dashboard-header p {
+            font-size: 1.3rem;
+            opacity: 0.9;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-card h3 {
+            color: #636e72;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 500;
+        }
+
+        .stat-value {
+            font-size: 2.8rem;
+            font-weight: bold;
+            color: #00b894;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .stat-card p {
+            font-family: 'Oswald', sans-serif;
+            margin-top: 0.5rem;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .chart-card h3 {
+            color: #2d3436;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .insight-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #00b894;
+        }
+
+        .insight-card h4 {
+            color: #2d3436;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .insight-card ul {
+            list-style: none;
+        }
+
+        .insight-card li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #dfe6e9;
+            display: flex;
+            align-items: center;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .insight-card li:before {
+            content: "🌱";
+            margin-right: 0.5rem;
+        }
+
+        .insight-card li:last-child {
+            border-bottom: none;
+        }
+
+        /* Recommendation Page Styles */
+        .page-header {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .page-header h2 {
+            color: #2d3436;
+            margin-bottom: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .page-header p {
+            color: #636e72;
+            font-size: 1.2rem;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .recommendation-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 968px) {
+            .recommendation-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .form-section {
+            margin-bottom: 2rem;
+        }
+
+        .form-section h3 {
+            color: #2d3436;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #dfe6e9;
+            font-size: 1.3rem;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .input-group label {
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            color: #2d3436;
+            font-size: 1rem;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 0.75rem;
+            border: 2px solid #dfe6e9;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #00b894;
+        }
+
+        .predict-btn {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(135deg, #00b894, #00a085);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.2rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 1rem;
+            font-family: 'Oswald', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .predict-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 184, 148, 0.4);
+        }
+
+        .predict-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .results-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .top-recommendation {
+            background: linear-gradient(135deg, #55efc4, #00b894);
+            padding: 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+            text-align: center;
+            color: white;
+        }
+
+        .top-recommendation h4 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .top-recommendation p {
+            font-family: 'Oswald', sans-serif;
+            font-size: 1.1rem;
+        }
+
+        .recommendations-list {
+            margin-bottom: 2rem;
+        }
+
+        .recommendations-list h4 {
+            color: #2d3436;
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+        }
+
+        .crop-card {
+            background: #f8f9fa;
+            padding: 1rem;
+            margin: 0.5rem 0;
+            border-radius: 8px;
+            border-left: 4px solid #00b894;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .crop-card:hover {
+            transform: translateX(5px);
+        }
+
+        .crop-card.high {
+            border-left-color: #00b894;
+        }
+
+        .crop-card.medium {
+            border-left-color: #fdcb6e;
+        }
+
+        .crop-card.low {
+            border-left-color: #e17055;
+        }
+
+        .crop-name {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #2d3436;
+            font-family: 'Playfair Display', serif;
+        }
+
+        .crop-probability {
+            color: #636e72;
+            font-size: 1rem;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .confidence-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .confidence-badge.high {
+            background: #55efc4;
+            color: #2d3436;
+        }
+
+        .confidence-badge.medium {
+            background: #ffeaa7;
+            color: #2d3436;
+        }
+
+        .confidence-badge.low {
+            background: #fab1a0;
+            color: #2d3436;
+        }
+
+        /* Fertilizer Page Styles */
+        .fertilizer-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .fertilizer-result {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .fertilizer-card {
+            background: linear-gradient(135deg, #74b9ff, #0984e3);
+            padding: 2rem;
+            border-radius: 10px;
+            color: white;
+            text-align: center;
+        }
+
+        .fertilizer-card h3 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .fertilizer-card p {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        /* Analytics Page Styles */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+        }
+
+        .analytics-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .analytics-card h3 {
+            color: #2d3436;
+            margin-bottom: 1rem;
+            text-align: center;
+            font-size: 1.6rem;
+        }
+
+        .error-message {
+            background: #ffeaa7;
+            color: #d63031;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            border-left: 4px solid #d63031;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .success-message {
+            background: #55efc4;
+            color: #2d3436;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            border-left: 4px solid #00b894;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: #636e72;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .model-info {
+            background: #dfe6e9;
+            padding: 1rem;
+            border-radius: 5px;
+            margin: 1rem 0;
+            font-size: 1rem;
+            font-family: 'Oswald', sans-serif;
+        }
+
+        .feature-count {
+            display: inline-block;
+            background: #00b894;
+            color: white;
+            padding: 0.3rem 0.8rem;
+            border-radius: 15px;
+            font-size: 0.9rem;
+            margin-left: 0.5rem;
+            font-family: 'Oswald', sans-serif;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-brand">
+            <h1>🌱 KnowYourCrop</h1>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="nav-link active" data-page="dashboard">Dashboard</a></li>
+            <li><a href="#" class="nav-link" data-page="recommendation">Crop Recommendation</a></li>
+            <li><a href="#" class="nav-link" data-page="fertilizer">Fertilizer Suggestion</a></li>
+            <li><a href="#" class="nav-link" data-page="analytics">Analytics</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <div class="dashboard-header">
+                <h1>🌱 Advanced KnowYourCrop Intelligence Platform</h1>
+                <p>AI-Powered Crop Recommendation System with 22+ Crop Types</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Model Accuracy</h3>
+                    <div class="stat-value">95%</div>
+                    <p>AI prediction accuracy</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Total Crops</h3>
+                    <div class="stat-value">22</div>
+                    <p>Different crop types</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Features Used</h3>
+                    <div class="stat-value">22</div>
+                    <p>Input parameters</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Response Time</h3>
+                    <div class="stat-value">< 2s</div>
+                    <p>Quick predictions</p>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3>Crop Yield Distribution</h3>
+                    <canvas id="yieldChart" height="300"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Soil Type Distribution</h3>
+                    <canvas id="soilChart" height="300"></canvas>
+                </div>
+            </div>
+
+            <div class="insights-grid" id="insightsContainer">
+                <!-- Insights will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Crop Recommendation Page -->
+        <div id="recommendation" class="page">
+            <div class="page-header">
+                <h2>🌾 Smart Crop Recommendation</h2>
+                <p>Enter your agricultural parameters to get AI-powered crop recommendations</p>
+            </div>
+
+            <div class="recommendation-container">
+                <form id="cropForm" class="input-form">
+                    <div class="form-section">
+                        <h3>Basic Soil Parameters <span class="feature-count">7 features</span></h3>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Nitrogen (N) ppm</label>
+                                <input type="text" name="N" value="50" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Phosphorus (P) ppm</label>
+                                <input type="text" name="P" value="40" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Potassium (K) ppm</label>
+                                <input type="text" name="K" value="40" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Temperature (°C)</label>
+                                <input type="text" name="temperature" value="25" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Humidity (%)</label>
+                                <input type="text" name="humidity" value="60" required>
+                            </div>
+                            <div class="input-group">
+                                <label>pH Level</label>
+                                <input type="text" name="ph" value="6.5" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Rainfall (mm)</label>
+                                <input type="text" name="rainfall" value="150" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Soil Properties <span class="feature-count">5 features</span></h3>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Soil Type</label>
+                                <select name="Soil_Type" required>
+                                    <option value="Alluvial/Clay">Alluvial/Clay</option>
+                                    <option value="Loamy">Loamy</option>
+                                    <option value="Red/Loamy">Red/Loamy</option>
+                                    <option value="Alluvial">Alluvial</option>
+                                    <option value="Mountain/Loamy">Mountain/Loamy</option>
+                                    <option value="Black (Vertisol)">Black (Vertisol)</option>
+                                    <option value="Acidic/Hilly">Acidic/Hilly</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Soil Organic Carbon (%)</label>
+                                <input type="text" name="Soil_Organic_Carbon_pct" value="1.5" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Soil Salinity (ds/m)</label>
+                                <input type="text" name="Soil_Salinity_ds_m" value="2.0" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Soil Moisture (%)</label>
+                                <input type="text" name="Soil_Moisture_pct" value="30" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Elevation (meters)</label>
+                                <input type="text" name="Elevation_m" value="200" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Environmental Conditions <span class="feature-count">6 features</span></h3>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Avg Temp (Last 3 Months °C)</label>
+                                <input type="text" name="Avg_Temp_Last_3_Months_C" value="24" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Avg Rainfall (Last 3 Months mm)</label>
+                                <input type="text" name="Avg_Rainfall_Last_3_Months_mm" value="100" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Wind Speed (km/h)</label>
+                                <input type="text" name="Wind_Speed_km_h" value="10" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Climate Zone</label>
+                                <select name="Climate_Zone" required>
+                                    <option value="Temperate">Temperate</option>
+                                    <option value="Subtropical/Monsoon">Subtropical/Monsoon</option>
+                                    <option value="Tropical (Wet)">Tropical (Wet)</option>
+                                    <option value="Arid/Semi-arid">Arid/Semi-arid</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Irrigation Availability</label>
+                                <select name="Irrigation_Availability" required>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label>Previous Crop</label>
+                                <select name="Previous_Crop" required>
+                                    <option value="rice">Rice</option>
+                                    <option value="maize">Maize</option>
+                                    <option value="chickpea">Chickpea</option>
+                                    <option value="kidneybeans">Kidneybeans</option>
+                                    <option value="pigeonpeas">Pigeonpeas</option>
+                                    <option value="mothbeans">Mothbeans</option>
+                                    <option value="mungbean">Mungbean</option>
+                                    <option value="blackgram">Blackgram</option>
+                                    <option value="lentil">Lentil</option>
+                                    <option value="pomegranate">Pomegranate</option>
+                                    <option value="banana">Banana</option>
+                                    <option value="mango">Mango</option>
+                                    <option value="grapes">Grapes</option>
+                                    <option value="watermelon">Watermelon</option>
+                                    <option value="muskmelon">Muskmelon</option>
+                                    <option value="apple">Apple</option>
+                                    <option value="orange">Orange</option>
+                                    <option value="papaya">Papaya</option>
+                                    <option value="coconut">Coconut</option>
+                                    <option value="cotton">Cotton</option>
+                                    <option value="jute">Jute</option>
+                                    <option value="coffee">Coffee</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3>Economic & Sustainability <span class="feature-count">4 features</span></h3>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Market Price (Rs/kg)</label>
+                                <input type="text" name="Market_Price_Rs_per_kg" value="40" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Water Requirement Index</label>
+                                <input type="text" name="Water_Requirement_Index" value="1.5" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Profitability Index</label>
+                                <input type="text" name="Profitability_Index" value="0.28" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Sustainability Score</label>
+                                <input type="text" name="Sustainability_Score" value="0.46" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="predict-btn" id="predictBtn">
+                        Get Crop Recommendations
+                    </button>
+                </form>
+
+                <div class="results-section" id="resultsSection" style="display: none;">
+                    <!-- Results will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Fertilizer Suggestion Page -->
+        <div id="fertilizer" class="page">
+            <div class="page-header">
+                <h2>🧪 Smart Fertilizer Recommendation</h2>
+                <p>Get customized fertilizer suggestions based on your soil conditions</p>
+            </div>
+
+            <div class="recommendation-container">
+                <form id="fertilizerForm" class="fertilizer-form">
+                    <div class="form-section">
+                        <h3>Soil Parameters for Fertilizer Analysis</h3>
+                        <div class="input-grid">
+                            <div class="input-group">
+                                <label>Nitrogen (N) ppm</label>
+                                <input type="text" name="N" value="50" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Phosphorus (P) ppm</label>
+                                <input type="text" name="P" value="40" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Potassium (K) ppm</label>
+                                <input type="text" name="K" value="40" required>
+                            </div>
+                            <div class="input-group">
+                                <label>pH Level</label>
+                                <input type="text" name="pH" value="6.5" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Soil Organic Carbon (%)</label>
+                                <input type="text" name="Soil_Organic_Carbon_pct" value="1.5" required>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="predict-btn">
+                        Get Fertilizer Recommendation
+                    </button>
+                </form>
+
+                <div class="fertilizer-result" id="fertilizerResults" style="display: none;">
+                    <!-- Fertilizer results will be displayed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Analytics Page -->
+        <div id="analytics" class="page">
+            <div class="page-header">
+                <h2>📈 Advanced Analytics</h2>
+                <p>Comprehensive insights and data visualization for agricultural optimization</p>
+            </div>
+
+            <div class="analytics-grid">
+                <div class="analytics-card">
+                    <h3>Crop Distribution Analysis</h3>
+                    <canvas id="cropDistributionChart" height="400"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Seasonal Analysis</h3>
+                    <canvas id="seasonalChart" height="400"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Soil Health Indicators</h3>
+                    <canvas id="soilHealthChart" height="300"></canvas>
+                </div>
+                <div class="analytics-card">
+                    <h3>Profitability Analysis</h3>
+                    <canvas id="profitabilityChart" height="300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // Navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = e.target.getAttribute('data-page');
+
+                // Update active nav link
+                document.querySelectorAll('.nav-link').forEach(nav => nav.classList.remove('active'));
+                e.target.classList.add('active');
+
+                // Show selected page
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.getElementById(page).classList.add('active');
+
+                // If analytics page, update charts
+                if (page === 'analytics') {
+                    updateAnalyticsCharts();
+                }
+            });
+        });
+
+        // Dashboard Charts
+        const yieldChart = new Chart(document.getElementById('yieldChart'), {
+            type: 'bar',
+            data: {
+                labels: ['Rice', 'Maize', 'Chickpea', 'Cotton', 'Pomegranate', 'Mango'],
+                datasets: [{
+                    label: 'Yield (kg/hectare)',
+                    data: [4500, 3200, 1800, 2200, 3500, 2800],
+                    backgroundColor: '#00b894'
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                }
+            }
+        });
+
+        const soilChart = new Chart(document.getElementById('soilChart'), {
+            type: 'pie',
+            data: {
+                labels: ['Alluvial/Clay', 'Loamy', 'Red/Loamy', 'Alluvial', 'Mountain/Loamy', 'Black (Vertisol)', 'Acidic/Hilly'],
+                datasets: [{
+                    data: [25, 20, 15, 12, 10, 10, 8],
+                    backgroundColor: ['#00b894', '#74b9ff', '#fdcb6e', '#a29bfe', '#fd79a8', '#55efc4', '#e17055']
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                    }
+                }
+            }
+        });
+
+        // Analytics Charts
+        function updateAnalyticsCharts() {
+            // Crop Distribution Chart
+            const cropDistributionChart = new Chart(document.getElementById('cropDistributionChart'), {
+                type: 'pie',
+                data: {
+                    labels: [
+                        'Rice', 'Maize', 'Chickpea', 'Kidneybeans', 'Pigeonpeas',
+                        'Mothbeans', 'Mungbean', 'Blackgram', 'Lentil', 'Pomegranate',
+                        'Banana', 'Mango', 'Grapes', 'Watermelon', 'Muskmelon',
+                        'Apple', 'Orange', 'Papaya', 'Coconut', 'Cotton', 'Jute', 'Coffee'
+                    ],
+                    datasets: [{
+                        data: [8, 12, 6, 5, 4, 4, 4, 4, 5, 3, 4, 4, 3, 3, 3, 4, 4, 3, 3, 6, 4, 4],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                            '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384',
+                            '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                            '#FF9F40', '#FF6384'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                                font: {
+                                    size: 10
+                                }
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Distribution of 22 Available Crops'
+                        }
+                    }
+                }
+            });
+
+            // Seasonal Analysis Chart
+            const seasonalChart = new Chart(document.getElementById('seasonalChart'), {
+                type: 'radar',
+                data: {
+                    labels: ['Kharif', 'Rabi', 'Zaid', 'Annual', 'Perennial'],
+                    datasets: [{
+                        label: 'Crop Suitability',
+                        data: [80, 65, 45, 70, 60],
+                        backgroundColor: 'rgba(116, 185, 255, 0.2)',
+                        borderColor: '#74b9ff',
+                        pointBackgroundColor: '#74b9ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        r: {
+                            angleLines: {
+                                display: true
+                            },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    }
+                }
+            });
+
+            // Soil Health Indicators Chart
+            const soilHealthChart = new Chart(document.getElementById('soilHealthChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Optimal', 'Good', 'Fair', 'Poor'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: [
+                            '#00b894',
+                            '#74b9ff',
+                            '#fdcb6e',
+                            '#e17055'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                        }
+                    }
+                }
+            });
+
+            // Profitability Analysis Chart
+            const profitabilityChart = new Chart(document.getElementById('profitabilityChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Rice', 'Maize', 'Chickpea', 'Cotton', 'Pomegranate', 'Mango'],
+                    datasets: [{
+                        label: 'Profit Margin (%)',
+                        data: [35, 28, 42, 38, 65, 55],
+                        backgroundColor: [
+                            '#00b894',
+                            '#74b9ff',
+                            '#fdcb6e',
+                            '#a29bfe',
+                            '#fd79a8',
+                            '#55efc4'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Profit Margin (%)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize dashboard data
+        async function initializeDashboard() {
+            try {
+                const statusResponse = await fetch(`${API_BASE_URL}/api/health`);
+                const status = await statusResponse.json();
+
+                const statsResponse = await fetch(`${API_BASE_URL}/api/crop_stats`);
+                const stats = await statsResponse.json();
+
+                // Update dashboard stats
+                document.getElementById('totalCrops').textContent = status.total_crops || '22';
+
+                // Load insights
+                const insightsContainer = document.getElementById('insightsContainer');
+                insightsContainer.innerHTML = `
+                    <div class="insight-card">
+                        <h4>High Yield Crops</h4>
+                        <ul>
+                            ${stats.high_yield_crops.map(crop => `<li>${crop}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="insight-card">
+                        <h4>High Profit Crops</h4>
+                        <ul>
+                            ${stats.high_profit_crops.map(crop => `<li>${crop}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div class="insight-card">
+                        <h4>Sustainable Crops</h4>
+                        <ul>
+                            ${stats.sustainable_crops.map(crop => `<li>${crop}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+
+                console.log('Model Status:', status);
+                console.log('Available Crops:', stats.all_crops);
+
+            } catch (error) {
+                console.error('Error initializing dashboard:', error);
+            }
+        }
+
+        // Crop Recommendation Form
+        document.getElementById('cropForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const predictBtn = document.getElementById('predictBtn');
+            const resultsSection = document.getElementById('resultsSection');
+
+            predictBtn.disabled = true;
+            predictBtn.textContent = 'Analyzing...';
+
+            const formData = new FormData(e.target);
+            const inputData = {};
+            formData.forEach((value, key) => {
+                // Convert text fields to numbers for API
+                if (['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall',
+                     'Soil_Organic_Carbon_pct', 'Soil_Salinity_ds_m', 'Soil_Moisture_pct',
+                     'Elevation_m', 'Avg_Temp_Last_3_Months_C', 'Avg_Rainfall_Last_3_Months_mm',
+                     'Wind_Speed_km_h', 'Market_Price_Rs_per_kg', 'Water_Requirement_Index',
+                     'Profitability_Index', 'Sustainability_Score'].includes(key)) {
+                    inputData[key] = parseFloat(value) || 0;
+                } else {
+                    inputData[key] = value;
+                }
+            });
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(inputData)
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                resultsSection.style.display = 'block';
+                resultsSection.innerHTML = `
+                    <div class="model-info">
+                        <strong>KnowYourCrop Analysis:</strong> Used ${result.all_crops_count || '22'} crop types and 22 features
+                    </div>
+
+                    <div class="top-recommendation">
+                        <h4>🌿 Top Recommendation: ${result.top_recommendation}</h4>
+                        <p>Model Confidence: ${(result.model_accuracy * 100).toFixed(1)}%</p>
+                    </div>
+
+                    <div class="recommendations-list">
+                        <h4>All Recommendations (Top 5):</h4>
+                        ${result.recommendations.map(rec => `
+                            <div class="crop-card ${rec.confidence.toLowerCase()}">
+                                <div class="crop-name">${rec.crop}</div>
+                                <div class="crop-probability">
+                                    Confidence: ${(rec.probability * 100).toFixed(1)}%
+                                </div>
+                                <div class="confidence-badge ${rec.confidence.toLowerCase()}">
+                                    ${rec.confidence}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsSection.style.display = 'block';
+                resultsSection.innerHTML = `
+                    <div class="error-message">
+                        Error: ${error.message}
+                    </div>
+                `;
+            } finally {
+                predictBtn.disabled = false;
+                predictBtn.textContent = 'Get Crop Recommendations';
+            }
+        });
+
+        // Fertilizer Form
+        document.getElementById('fertilizerForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const resultsSection = document.getElementById('fertilizerResults');
+
+            const formData = new FormData(e.target);
+            const inputData = {};
+            formData.forEach((value, key) => {
+                if (['N', 'P', 'K', 'pH', 'Soil_Organic_Carbon_pct'].includes(key)) {
+                    inputData[key] = parseFloat(value) || 0;
+                } else {
+                    inputData[key] = value;
+                }
+            });
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/api/fertilizer_recommendation`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(inputData)
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+
+                resultsSection.style.display = 'block';
+                resultsSection.innerHTML = `
+                    <div class="fertilizer-card">
+                        <h3>🧪 KnowYourCrop Recommended Fertilizer</h3>
+                        <p><strong>${result.recommended_fertilizer}</strong></p>
+                        <p>Dosage: ${result.dosage}</p>
+                        <p>Soil Condition: ${result.soil_condition}</p>
+                    </div>
+                `;
+
+            } catch (error) {
+                resultsSection.style.display = 'block';
+                resultsSection.innerHTML = `
+                    <div class="error-message">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        });
+
+        // Initialize dashboard when page loads
+        initializeDashboard();
+        updateAnalyticsCharts();
+    </script>
+</body>
+</html>
